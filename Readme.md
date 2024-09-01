@@ -1,4 +1,3 @@
-![photo_2024-09-01_14-35-14](https://github.com/user-attachments/assets/2bb0cf66-9c7a-4869-a511-0e643c75eab8)
 ![Logo](https://via.placeholder.com/600x150?text=Your+Logo+Here+600x150)
 
 
