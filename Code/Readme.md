@@ -11,10 +11,7 @@ Please edit this *readme* file and give brief description of each part.
 **Example:**
 
 ## Server
-Server implemeted using `Django`.
+Server implemeted using `C#`.
 
-## Client
-Pure `HTML`, `CSS`& `JS` is used for user interface.
-
-## ESP32
+## ESP32 (Client)
 ESP32 is prgorammed using `C++` in `Arduino IDE`. 
