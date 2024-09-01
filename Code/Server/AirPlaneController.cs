@@ -5,7 +5,6 @@ using System.Text;
 using System.Threading;
 using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
 public class AirplaneController : MonoBehaviour
 {
@@ -15,13 +14,21 @@ public class AirplaneController : MonoBehaviour
     private Thread serverThread;
 
     private Vector3 airplanePosition = Vector3.zero;
-    private Quaternion airplaneRotation = Quaternion.identity; 
+    private Quaternion airplaneRotation = Quaternion.identity;
     private string textMessageString;
 
     private Vector3 velocity = Vector3.zero;
-
     private Vector3 angularVelocity = Vector3.zero;
-    public Vector3 impact = Vector3.zero;
+    public Vector3 impact = Vector3.one;
+
+    private Vector3 acceleration = Vector3.zero;
+    public bool useAccelerationForRotation = false;
+    public bool steer = true;
+
+    public Vector3 referenceGravity = new Vector3(10, 0.3f, 0.3f);
+    public Vector3 offset = new Vector3(10, 0.3f, 0.3f);
+    public Vector3 accelCoeffs = new Vector3(0, -1, -1);
+
 
     void Start()
     {
@@ -30,9 +37,30 @@ public class AirplaneController : MonoBehaviour
 
     void Update()
     {
-        Quaternion deltaRotation = Quaternion.Euler(Vector3.Scale(angularVelocity, impact) * Time.deltaTime);
-        airplaneRotation *= deltaRotation;
+        if (useAccelerationForRotation)
+        {
 
+            Vector3 normalizedRefGravity = referenceGravity.normalized;
+            Vector3 normalizedAcceleration = acceleration.normalized;
+
+            Quaternion targetRotation = Quaternion.FromToRotation(normalizedAcceleration, normalizedRefGravity);
+            Quaternion clockwise90Rotation = Quaternion.Euler(offset);
+            targetRotation *= clockwise90Rotation;
+
+            airplaneRotation = Quaternion.Slerp(airplaneRotation, targetRotation, Time.deltaTime * 2f);
+            
+            Vector3 steerVector = Vector3.Scale(angularVelocity, impact);
+            if (steer) {
+            steerVector = new Vector3(0,-steerVector.y,0);
+            Quaternion deltaRotation = Quaternion.Euler(steerVector * Time.deltaTime);
+            airplaneRotation *= deltaRotation;
+            }
+        }
+        else
+        {
+            Quaternion deltaRotation = Quaternion.Euler(Vector3.Scale(angularVelocity, impact) * Time.deltaTime);
+            airplaneRotation *= deltaRotation;
+        }
         transform.rotation = airplaneRotation;
         textM.text = textMessageString;
     }
@@ -103,6 +131,8 @@ public class AirplaneController : MonoBehaviour
         float accelY = float.Parse(accelValues[1].Split(':')[1]);
         float accelZ = float.Parse(accelValues[2].Split(':')[1]);
 
+        acceleration = new Vector3(accelCoeffs.x * accelY,accelCoeffs.y *  accelX,accelCoeffs.z *  accelZ);
+        Debug.Log(acceleration);
         velocity = new Vector3(accelY, accelZ, accelX);
 
         string[] gyroValues = gyroData.Split(',');
@@ -110,6 +140,7 @@ public class AirplaneController : MonoBehaviour
         float gyroX = Mathf.Round(float.Parse(gyroValues[0].Split(':')[1]) * 10f) / 10f;
         float gyroY = Mathf.Round(float.Parse(gyroValues[1].Split(':')[1]) * 10f) / 10f;
         float gyroZ = Mathf.Round(float.Parse(gyroValues[2].Split(':')[1]) * 10f) / 10f;
+
         angularVelocity = new Vector3(gyroY, gyroX, gyroZ);
 
         StringBuilder logMessage = new StringBuilder("Effective Values : Gyro : ");
